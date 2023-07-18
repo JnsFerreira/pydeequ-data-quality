@@ -8,16 +8,19 @@ from pydeequ.analyzers import AnalysisRunner, _AnalyzerObject
 from pydeequ.repository import FileSystemMetricsRepository, ResultKey
 
 
-# TODO: Setup repository root path
 class DataQuality:
     """
     Class that runs Data Quality reports
 
     Args:
+        run_id (str): Unique report identifier
+        metrics_bucket (str): Metrics bucket name
         spark (SparkSession): Spark session
         spark_version (str): Running spark version
         tags (dict): Tags to be applyied to reports
     """
+    run_id: str
+    metrics_bucket: str
     spark: SparkSession
     spark_version: str
     tags: dict
@@ -39,8 +42,10 @@ class DataQuality:
         Returns:
             FileSystemMetricsRepository: High level metrics repository
         """
+        repository_path = f"s3://{self.metrics_bucket}/{self.run_id}/{filename}"
+
         metrics_file = FileSystemMetricsRepository.helper_metrics_file(
-            self.spark, filename
+            self.spark, repository_path
         )
 
         return FileSystemMetricsRepository(self.spark, metrics_file)
@@ -104,4 +109,3 @@ class DataQuality:
             .useRepository(repository) \
             .saveOrAppendResult(result_key) \
             .run()
-    
