@@ -10,21 +10,48 @@ from pydeequ.repository import FileSystemMetricsRepository, ResultKey
 
 # TODO: Setup repository root path
 class DataQuality:
+    """
+    Class that runs Data Quality reports
+
+    Args:
+        spark (SparkSession): Spark session
+        spark_version (str): Running spark version
+        tags (dict): Tags to be applyied to reports
+    """
     spark: SparkSession
     spark_version: str
     tags: dict
 
+
     def __post__init__(self) -> None:
+        """
+        Post initializes `DataQuality` class
+        """
         os.environ["SPARK_VERSION"] = self.spark_version
 
-    def _setup_repository(self, filename: str = "metrics.json"):
+    def _setup_repository(self, filename: str = "metrics.json") -> FileSystemMetricsRepository:
+        """
+        Setup metrics repository
+
+        Args:
+            filename (str): Metrics file name
+
+        Returns:
+            FileSystemMetricsRepository: High level metrics repository
+        """
         metrics_file = FileSystemMetricsRepository.helper_metrics_file(
             self.spark, filename
         )
 
         return FileSystemMetricsRepository(self.spark, metrics_file)
 
-    def _get_result_key(self) -> ResultKey:
+    def _generate_result_key(self) -> ResultKey:
+        """
+        Generates a unique identifier for an analysis or profile
+
+        Returns:
+            ResultKey: Information that uniquely identifies a AnalysisResult
+        """
         result_key_date = ResultKey.current_milli_time()
 
         return ResultKey(
@@ -36,19 +63,41 @@ class DataQuality:
     def run_analysis(
         self, dataframe: DataFrame, analyzers: List[_AnalyzerObject]
     ) -> None:
+        """
+        Runs a data quality analysis
+
+        Args:
+            dataframe (DataFrame): Data to perform data quality analysis
+            analyzers (List[_AnalyzerObject]): List of analyzers to apply on data
+
+        Returns:
+            None
+        """
         repository = self._setup_repository()
-        result_key = self._get_result_key(filename="analyzer.json")
+        result_key = self._generate_result_key(filename="analyzer.json")
 
         analysis_results = AnalysisRunner(spark_session=self.spark).onData(df=dataframe)
 
         for analyzer in analyzers:
             analysis_results = analysis_results.addAnalyzer(analyzer=analyzer)
 
-        analysis_results.useRepository(repository).saveOrAppendResult(result_key).run()
+        analysis_results \
+            .useRepository(repository) \
+            .saveOrAppendResult(result_key) \
+            .run()
 
-    def run_data_profiling(self, dataframe: DataFrame):
+    def run_data_profiling(self, dataframe: DataFrame) -> None:
+        """
+        Runs a data profile report on a given data
+
+        Args:
+            dataframe (DataFrame): Data to perform data profile report
+
+        Returns:
+            None
+        """
         repository = self._setup_repository()
-        result_key = self._get_result_key(filename="profiling.json")
+        result_key = self._generate_result_key(filename="profiling.json")
 
         ColumnProfilerRunner(self.spark) \
             .onData(dataframe) \
