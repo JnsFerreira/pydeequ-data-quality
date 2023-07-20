@@ -5,14 +5,22 @@ from src.dataquality import DataQuality
 
 
 class TestDataQuality:
+    """Test suite for `DataQuality` class"""
+
     @pytest.fixture(scope="session")
     def spark(self) -> mock.MagicMock:
+        """
+        Fixture for spark session
+        """
         spark = mock.MagicMock()
 
         return spark
 
     @pytest.fixture
     def data_quality(self, spark) -> DataQuality:
+        """
+        Fixture for `DataQuality` class instance
+        """
         return DataQuality(
             run_id="unit-test-run",
             metrics_bucket="my-dq-metrics",
