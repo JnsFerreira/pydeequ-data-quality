@@ -1,5 +1,6 @@
 import os
 from typing import List
+from dataclasses import dataclass
 
 from pyspark.sql import SparkSession, DataFrame
 
@@ -8,6 +9,7 @@ from pydeequ.analyzers import AnalysisRunner, _AnalyzerObject
 from pydeequ.repository import FileSystemMetricsRepository, ResultKey
 
 
+@dataclass
 class DataQuality:
     """
     Class that runs Data Quality reports
@@ -79,7 +81,7 @@ class DataQuality:
             None
         """
         repository = self._setup_repository()
-        result_key = self._generate_result_key(filename="analyzer.json")
+        result_key = self._generate_result_key()
 
         analysis_results = AnalysisRunner(spark_session=self.spark).onData(df=dataframe)
 
@@ -101,8 +103,8 @@ class DataQuality:
         Returns:
             None
         """
-        repository = self._setup_repository()
-        result_key = self._generate_result_key(filename="profiling.json")
+        repository = self._setup_repository(filename="profiling.json")
+        result_key = self._generate_result_key()
 
         ColumnProfilerRunner(self.spark) \
             .onData(dataframe) \
